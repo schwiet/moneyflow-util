@@ -53,11 +53,26 @@ const mapValues = ( { value } ) => {
     return result
 }
 
-// read the CSV entries into an array of key:value pairs
-const transactions = []
+// adds the passed enty to the appropriate month, adding a record for the month
+// if necessary
+const groupByMonth = months => entry => {
+    let month = months[ entry.month ]
+    // ensure theres an array for that month
+    if( !month ){
+        month = []
+        months[ entry.month ] = month
+        months.months.push( entry.month )
+    }
+    month.push( entry )
+    months.total += 1;
+}
+
+// read the CSV entries into an arrays of key:value pairs per month
+const transactions = { total: 0, months: [] }
+const splitTransactions = groupByMonth( transactions )
 fs.createReadStream( filePath )
   .pipe( csv( { mapHeaders, mapValues } ) )
-  .on('data', data => transactions.push( data ) )
+  .on('data', splitTransactions )
   .on( 'end', () => {
-      console.log( 'read transactions', transactions )
+      console.log( `read ${transactions.total} transactions, covering months: ${transactions.months}` )
   });
